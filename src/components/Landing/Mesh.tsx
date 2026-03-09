@@ -16,5 +16,14 @@ const STEP = PLANE_WIDTH + COL_GAP;
 const images: string[][] = [
     ['/images/kali.png', '/images/p.jpg', '/images/rock.jpg', '/images/rock2.jpg'],
     ['/images/1.jpg', '/images/2.jpg', '/images/house.jpg', '/images/bird.jpg'],
-    ['/images/3']
-]
+    ['/images/neck.jpg', '/images/rock5.jpg', '/images/fog.jpg', '/images/rock7.jpg'],
+    ['/images/road.jpg', '/images/ref.jpg', '/images/butterfly.jpg'],
+    ['/images/canada.jpg', '/images/rock10.jpg', '/images/12.jpg'],
+];
+
+const NUM_ROWS = images.length;
+
+interface RowProps {
+    rowIndex: number;
+
+}
