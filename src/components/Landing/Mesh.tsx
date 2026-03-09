@@ -1,29 +1,101 @@
 "use client";
 
-import { useTexture } from "@react-three/drei";
+import  { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { vertexShader, fragmentShader } from "@/lib/Shaders";
-import { Suspense, useMemo, useRef } from "react";
+import {Suspense, useMemo, useRef} from "react";
 import { useFrame } from "@react-three/fiber";
 import { useScroll } from "@/hooks/useScroll";
 
-const PLANE_WIDTH = 2.5;
-const PLANE_HEIGHT = 1.5;
-const COL_GAP = 1.5;
-const ROW_GAP = 1.5;
-const STEP = PLANE_WIDTH + COL_GAP;
+interface ImageProps {
+    src: string;
+}
 
-const images: string[][] = [
-    ['/images/kali.png', '/images/p.jpg', '/images/rock.jpg', '/images/rock2.jpg'],
-    ['/images/1.jpg', '/images/2.jpg', '/images/house.jpg', '/images/bird.jpg'],
-    ['/images/neck.jpg', '/images/rock5.jpg', '/images/fog.jpg', '/images/rock7.jpg'],
-    ['/images/road.jpg', '/images/ref.jpg', '/images/butterfly.jpg'],
-    ['/images/canada.jpg', '/images/rock10.jpg', '/images/12.jpg'],
+const images: ImageProps[] = [
+    { src: '/images/kali.png' },
+    { src: '/images/p.jpg' },
+    { src: '/images/rock.jpg' },
+    { src: '/images/rock2.jpg' },
+    { src: '/images/1.jpg' },
+    { src: '/images/2.jpg' },
+    { src: '/images/house.jpg' },
+    { src: '/images/bird.jpg' },
+    { src: '/images/neck.jpg' },
+    { src: '/images/rock5.jpg' },
+    { src: '/images/fog.jpg' },
+    { src: '/images/rock7.jpg' },
+    { src: '/images/road.jpg' },
+    { src: '/images/ref.jpg' },
+    { src: '/images/butterfly.jpg' },
+    { src: '/images/canada.jpg' },
+    { src: '/images/rock10.jpg' },
+    { src: '/images/12.jpg' },
 ];
 
-const NUM_ROWS = images.length;
+const PLANE_WIDTH = 2.5;
+const PLANE_HEIGHT = 1.5;
+const GAP = 0.05;
 
-interface RowProps {
-    rowIndex: number;
+function Meshes() {
+    const textures = useTexture(images.map(img => img.src)) as THREE.Texture[];
+    const materialsRef = useRef<(THREE.ShaderMaterial | null)[]>([]);
+    const groupRef      = useRef<THREE.Group>(null!);
 
+    const { scrollX, targetX, velocity } = useScroll();
+
+    const uniformsList = useMemo(() => {
+        return textures.map((texture) => ({
+            uTexture:   { value: texture },
+            uVelocity:  { value: 0 },
+        }));
+    }, [textures]);
+
+    useFrame(() => {
+        const diff = targetX.current - scrollX.current;
+        // eslint-disable-next-line react-hooks/immutability
+        scrollX.current += diff * 0.1;
+        // eslint-disable-next-line react-hooks/immutability
+        velocity.current = diff;
+
+        if (groupRef.current) {
+            groupRef.current.position.x = scrollX.current * 0.005;
+        }
+
+        materialsRef.current.forEach((mat) => {
+            if (mat) {
+                mat.uniforms.uVelocity.value = THREE.MathUtils.lerp(
+                    mat.uniforms.uVelocity.value,
+                    velocity.current,
+                    0.1
+                );
+            }
+        });
+    });
+
+    return (
+        <group ref={groupRef}>
+            {textures.map((_, index) => (
+                <mesh
+                    key={index}
+                    position={[index * (PLANE_WIDTH + GAP), 0, 0]}
+                >
+                    <planeGeometry args={[PLANE_WIDTH, PLANE_HEIGHT, 30, 30]} />
+                    <shaderMaterial
+                        ref={(el) => (materialsRef.current[index] = el)}
+                        vertexShader={vertexShader}
+                        fragmentShader={fragmentShader}
+                        uniforms={uniformsList[index]}
+                    />
+                </mesh>
+            ))}
+        </group>
+    )
+}
+
+export default function Mesh() {
+    return (
+        <Suspense fallback={null}>
+            <Meshes />
+        </Suspense>
+    );
 }
